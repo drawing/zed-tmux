@@ -170,6 +170,9 @@ func (m model) handleNormalKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		}
 	case "n":
+		m.result = action{typ: actionCreate, session: nextSessionName(m.sessions)}
+		return m, tea.Quit
+	case "N":
 		m.mode = modeInput
 		m.inputMode = "new"
 		m.input.SetValue(nextSessionName(m.sessions))
@@ -430,7 +433,7 @@ func (m model) viewNormal(b *strings.Builder) {
 		b.WriteString("  " + styleError.Render(m.errMsg) + "\n\n")
 	}
 
-	help := "  ↑↓/click select  enter attach  n new  r rename  d delete  q quit"
+	help := "  ↑↓/click select  enter attach  n new  N new+name  r rename  d delete  q quit"
 	b.WriteString(styleFaint.Render(help))
 }
 

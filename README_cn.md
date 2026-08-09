@@ -108,7 +108,8 @@ fi
 | `↑` / `k` | 上移光标 |
 | `↓` / `j` | 下移光标 |
 | `enter` / 点击 | attach 到选中 session |
-| `n` | 新建 session（预填下一个递增序号） |
+| `n` | 新建 session（自动编号，立即创建） |
+| `N` | 新建 session 并自定义名称 |
 | `r` | 重命名选中 session |
 | `d` | 删除选中 session（二次确认） |
 | `q` / `esc` | 退出（关闭终端 tab） |

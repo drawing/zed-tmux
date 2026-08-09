@@ -108,7 +108,8 @@ Opens automatically when you create a terminal tab in Zed:
 | `↑` / `k` | Move cursor up |
 | `↓` / `j` | Move cursor down |
 | `enter` / click | Attach to selected session |
-| `n` | New session (pre-filled with next incremental number) |
+| `n` | New session (auto-numbered, instant) |
+| `N` | New session with custom name |
 | `r` | Rename selected session |
 | `d` | Delete selected session (with confirmation) |
 | `q` / `esc` | Quit (closes the terminal tab) |
