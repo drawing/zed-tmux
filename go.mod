@@ -1,4 +1,4 @@
-module zed-tmux
+module github.com/drawing/zed-tmux
 
 go 1.25.0
 
