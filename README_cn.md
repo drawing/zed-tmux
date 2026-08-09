@@ -61,29 +61,19 @@ scp zed-tmux-linux remote:~/.local/bin/zed-tmux
 ## 配置（必须，仅需一次）
 
 > [!IMPORTANT]
-> 安装二进制后，**必须**完成以下配置。没有它 zed-tmux 不会激活。
+> 安装二进制后，**必须**执行以下配置。没有它 zed-tmux 不会激活。
 
 ### 自动配置（推荐）
 
 ```bash
-zed-tmux init
+~/.local/bin/zed-tmux init
 ```
 
-自动检测 shell（`zsh` / `bash`），将守卫代码追加到对应的 rc 文件，并检查 `PATH`。在每台使用 Zed 的机器上执行一次（本地和远端）。
+一条命令完成。自动检测 shell，将守卫代码以正确的绝对路径追加到 rc 文件。在每台使用 Zed 的机器上执行一次（本地和远端）。
 
 ### 手工配置
 
-**第 1 步** — 确认二进制在 `PATH` 中：
-
-```bash
-# 检查
-which zed-tmux
-
-# 如果找不到，在 .zshrc / .bashrc 中添加：
-export PATH="$HOME/.local/bin:$PATH"
-```
-
-**第 2 步** — 在 `.zshrc` 或 `.bashrc` 的**末尾**添加（本地和远端都需要）：
+在 `.zshrc` 或 `.bashrc` 的**末尾**添加：
 
 ```bash
 # zed-tmux: Zed 终端自动进入 tmux 持久化 session
@@ -92,17 +82,9 @@ if [[ -n "$ZED_TERM" && -z "$TMUX" && -z "$ZED_TMUX_GUARD" ]]; then
 fi
 ```
 
-> 如果通过 `go install` 或 Homebrew 安装，请将 `~/.local/bin/zed-tmux` 替换为 `which zed-tmux` 输出的实际路径。
+如果安装位置不同，将 `~/.local/bin/zed-tmux` 替换为实际路径。
 
-### 守卫代码说明
-
-| 变量 | 作用 |
-|---|---|
-| `$ZED_TERM` | Zed 对所有终端（本地 + 远程）注入此变量 |
-| `$TMUX` | 已在 tmux 内时阻止嵌套 |
-| `$ZED_TMUX_GUARD` | zed-tmux 降级为普通 shell 时设置，防止 rc 守卫再次触发 |
-
-`exec` 替换 shell 进程为 zed-tmux，不留中间进程。非 Zed 终端（普通 SSH、iTerm、Terminal.app 等）不受影响。
+守卫仅在 Zed 终端内触发（`$ZED_TERM`）。普通 SSH、iTerm、Terminal.app 等不受影响。
 
 ## 使用
 

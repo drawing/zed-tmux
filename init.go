@@ -58,14 +58,6 @@ func runInit() {
 
 	fmt.Printf("Detected shell: %s\n", shellName)
 	fmt.Printf("Added guard to %s\n", rcPath)
-
-	binDir := filepath.Dir(binPath)
-	if !dirInPath(binDir) {
-		fmt.Printf("\nWarning: %s is not in your PATH.\n", binDir)
-		fmt.Printf("Add this to %s:\n", rcPath)
-		fmt.Printf("  export PATH=\"%s:$PATH\"\n", binDir)
-	}
-
 	fmt.Printf("\nDone. Restart your terminal or run: source %s\n", rcPath)
 }
 
@@ -83,13 +75,4 @@ func homeDir() string {
 		os.Exit(1)
 	}
 	return home
-}
-
-func dirInPath(dir string) bool {
-	for _, entry := range filepath.SplitList(os.Getenv("PATH")) {
-		if entry == dir {
-			return true
-		}
-	}
-	return false
 }

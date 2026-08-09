@@ -61,29 +61,19 @@ Single static binary — zero runtime dependencies beyond tmux on the target mac
 ## Setup (required, one-time)
 
 > [!IMPORTANT]
-> After installing the binary, you **must** complete the setup below. Without it, zed-tmux will never activate.
+> After installing the binary, you **must** run the setup below. Without it, zed-tmux will never activate.
 
 ### Automated (recommended)
 
 ```bash
-zed-tmux init
+~/.local/bin/zed-tmux init
 ```
 
-This detects your shell (`zsh` / `bash`), appends the guard block to your rc file, and checks your `PATH`. Run it on each machine where you use Zed (local and remote).
+That's it. It detects your shell, appends the guard block to your rc file with the correct absolute path. Run it on each machine where you use Zed (local and remote).
 
 ### Manual
 
-**Step 1** — Make sure the binary is in your `PATH`:
-
-```bash
-# Check
-which zed-tmux
-
-# If not found, add to your .zshrc / .bashrc:
-export PATH="$HOME/.local/bin:$PATH"
-```
-
-**Step 2** — Add the following to the **end** of your `.zshrc` or `.bashrc` (on both local and remote machines):
+Add the following to the **end** of your `.zshrc` or `.bashrc`:
 
 ```bash
 # zed-tmux: persistent terminal sessions in Zed
@@ -92,17 +82,9 @@ if [[ -n "$ZED_TERM" && -z "$TMUX" && -z "$ZED_TMUX_GUARD" ]]; then
 fi
 ```
 
-> If you installed via `go install` or Homebrew, replace `~/.local/bin/zed-tmux` with the actual path from `which zed-tmux`.
+Replace `~/.local/bin/zed-tmux` with the actual path if you installed elsewhere.
 
-### What the guard does
-
-| Variable | Purpose |
-|---|---|
-| `$ZED_TERM` | Set by Zed for all its terminals (local + remote) |
-| `$TMUX` | Prevents nesting when already inside tmux |
-| `$ZED_TMUX_GUARD` | Prevents re-entry when zed-tmux degrades to a plain shell |
-
-`exec` replaces the shell process with zed-tmux — no intermediate process is left behind. Non-Zed terminals (regular SSH, iTerm, Terminal.app, etc.) are not affected.
+The guard only fires inside Zed terminals (`$ZED_TERM`). Regular SSH, iTerm, Terminal.app, etc. are not affected.
 
 ## Usage
 
