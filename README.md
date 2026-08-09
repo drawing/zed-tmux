@@ -27,15 +27,29 @@ zed-tmux bridges every Zed terminal tab to a tmux session. tmux servers survive 
 
 ## Installation
 
-### Local (macOS / Linux)
+### Pre-built binaries
+
+Download the latest release for your platform from [GitHub Releases](https://github.com/drawing/zed-tmux/releases):
 
 ```bash
+# Example: macOS ARM64
+curl -fsSL https://github.com/drawing/zed-tmux/releases/latest/download/zed-tmux_Darwin_arm64.tar.gz | tar xz
+mv zed-tmux ~/.local/bin/
+```
+
+### From source
+
+```bash
+# Requires Go 1.21+
+go install github.com/drawing/zed-tmux@latest
+
+# Or build manually
 git clone https://github.com/drawing/zed-tmux.git
 cd zed-tmux
 go build -o ~/.local/bin/zed-tmux .
 ```
 
-### Remote (cross-compile)
+### Cross-compile for remote servers
 
 ```bash
 GOOS=linux GOARCH=amd64 go build -o zed-tmux-linux .
@@ -44,9 +58,22 @@ scp zed-tmux-linux remote:~/.local/bin/zed-tmux
 
 Single static binary — zero runtime dependencies beyond tmux on the target machine.
 
-## Shell Configuration
+## Setup (required, one-time)
 
-Add to the **end** of your `.zshrc` or `.bashrc` (on both local and remote machines):
+> [!IMPORTANT]
+> After installing the binary, you **must** add the shell guard below. Without it, zed-tmux will never activate.
+
+**Step 1** — Make sure the binary is in your `PATH`:
+
+```bash
+# Check
+which zed-tmux
+
+# If not found, add to your .zshrc / .bashrc:
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+**Step 2** — Add the following to the **end** of your `.zshrc` or `.bashrc` (on both local and remote machines):
 
 ```bash
 # zed-tmux: persistent terminal sessions in Zed
@@ -54,6 +81,8 @@ if [[ -n "$ZED_TERM" && -z "$TMUX" && -z "$ZED_TMUX_GUARD" ]]; then
     exec ~/.local/bin/zed-tmux
 fi
 ```
+
+> If you installed via `go install` or Homebrew, replace `~/.local/bin/zed-tmux` with the actual path from `which zed-tmux`.
 
 | Variable | Purpose |
 |---|---|

@@ -27,15 +27,29 @@ zed-tmux 将每个 Zed 终端 tab 桥接到一个 tmux session。tmux server 进
 
 ## 安装
 
-### 本地（macOS / Linux）
+### 预编译二进制
+
+从 [GitHub Releases](https://github.com/drawing/zed-tmux/releases) 下载对应平台的最新版本：
 
 ```bash
+# 示例：macOS ARM64
+curl -fsSL https://github.com/drawing/zed-tmux/releases/latest/download/zed-tmux_Darwin_arm64.tar.gz | tar xz
+mv zed-tmux ~/.local/bin/
+```
+
+### 从源码构建
+
+```bash
+# 需要 Go 1.21+
+go install github.com/drawing/zed-tmux@latest
+
+# 或手动构建
 git clone https://github.com/drawing/zed-tmux.git
 cd zed-tmux
 go build -o ~/.local/bin/zed-tmux .
 ```
 
-### 远端（交叉编译）
+### 交叉编译到远端服务器
 
 ```bash
 GOOS=linux GOARCH=amd64 go build -o zed-tmux-linux .
@@ -44,9 +58,22 @@ scp zed-tmux-linux remote:~/.local/bin/zed-tmux
 
 单文件静态二进制，除目标机器上的 tmux 外零运行时依赖。
 
-## Shell 配置
+## 配置（必须，仅需一次）
 
-在 `.zshrc` 或 `.bashrc` 的**末尾**添加（本地和远端都需要）：
+> [!IMPORTANT]
+> 安装二进制后，**必须**添加下面的 shell 守卫代码。没有它 zed-tmux 不会激活。
+
+**第 1 步** — 确认二进制在 `PATH` 中：
+
+```bash
+# 检查
+which zed-tmux
+
+# 如果找不到，在 .zshrc / .bashrc 中添加：
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+**第 2 步** — 在 `.zshrc` 或 `.bashrc` 的**末尾**添加（本地和远端都需要）：
 
 ```bash
 # zed-tmux: Zed 终端自动进入 tmux 持久化 session
@@ -54,6 +81,8 @@ if [[ -n "$ZED_TERM" && -z "$TMUX" && -z "$ZED_TMUX_GUARD" ]]; then
     exec ~/.local/bin/zed-tmux
 fi
 ```
+
+> 如果通过 `go install` 或 Homebrew 安装，请将 `~/.local/bin/zed-tmux` 替换为 `which zed-tmux` 输出的实际路径。
 
 | 变量 | 作用 |
 |---|---|
