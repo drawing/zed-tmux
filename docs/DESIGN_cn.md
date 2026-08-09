@@ -417,6 +417,7 @@ zed-tmux/
 ├── go.sum              # 依赖校验
 ├── main.go             # 入口 + CLI 分发 + 降级逻辑
 ├── config.go           # tmux 配置常量 + ensureConfig()
+├── init.go             # `zed-tmux init` — shell rc 守卫自动配置
 ├── session.go          # tmux session 操作 + socket 计算 + 工具函数
 ├── tui.go              # bubbletea TUI 选择器（三模式状态机）
 └── gc.go               # gc 清理 + duration 解析

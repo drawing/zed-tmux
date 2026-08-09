@@ -10,13 +10,15 @@ import (
 	"golang.org/x/term"
 )
 
-const version = "0.1.0"
+var version = "dev"
 
 func main() {
 	if len(os.Args) > 1 {
 		switch os.Args[1] {
 		case "gc":
 			runGC(os.Args[2:])
+		case "init":
+			runInit()
 		case "list":
 			runList()
 		case "kill-all":

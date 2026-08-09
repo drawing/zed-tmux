@@ -4,6 +4,8 @@ builds:
   - id: zed-tmux
     main: .
     binary: zed-tmux
+    ldflags:
+      - -s -w -X main.version={{.Version}}
     goos:
       - darwin
       - linux

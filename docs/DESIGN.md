@@ -417,6 +417,7 @@ zed-tmux/
 ├── go.sum              # Dependency checksums
 ├── main.go             # Entry point + CLI dispatch + degradation logic
 ├── config.go           # tmux config constant + ensureConfig()
+├── init.go             # `zed-tmux init` — shell rc guard auto-setup
 ├── session.go          # tmux session operations + socket computation + utilities
 ├── tui.go              # bubbletea TUI picker (three-mode state machine)
 └── gc.go               # gc cleanup + duration parsing

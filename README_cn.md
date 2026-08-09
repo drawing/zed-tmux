@@ -61,7 +61,17 @@ scp zed-tmux-linux remote:~/.local/bin/zed-tmux
 ## 配置（必须，仅需一次）
 
 > [!IMPORTANT]
-> 安装二进制后，**必须**添加下面的 shell 守卫代码。没有它 zed-tmux 不会激活。
+> 安装二进制后，**必须**完成以下配置。没有它 zed-tmux 不会激活。
+
+### 自动配置（推荐）
+
+```bash
+zed-tmux init
+```
+
+自动检测 shell（`zsh` / `bash`），将守卫代码追加到对应的 rc 文件，并检查 `PATH`。在每台使用 Zed 的机器上执行一次（本地和远端）。
+
+### 手工配置
 
 **第 1 步** — 确认二进制在 `PATH` 中：
 
@@ -83,6 +93,8 @@ fi
 ```
 
 > 如果通过 `go install` 或 Homebrew 安装，请将 `~/.local/bin/zed-tmux` 替换为 `which zed-tmux` 输出的实际路径。
+
+### 守卫代码说明
 
 | 变量 | 作用 |
 |---|---|
@@ -127,6 +139,7 @@ fi
 
 ```bash
 zed-tmux                                   # TUI 选择器（通常由 rc 守卫自动调用）
+zed-tmux init                              # 一次性配置：自动添加 shell 守卫到 rc 文件
 zed-tmux list                              # 列出所有项目的所有 session
 zed-tmux gc [--dry-run] [--max-idle 30d]   # 清理空闲且未 attach 的 session
 zed-tmux kill-all                          # 清理当前项目的所有 session

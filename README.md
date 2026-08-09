@@ -61,7 +61,17 @@ Single static binary — zero runtime dependencies beyond tmux on the target mac
 ## Setup (required, one-time)
 
 > [!IMPORTANT]
-> After installing the binary, you **must** add the shell guard below. Without it, zed-tmux will never activate.
+> After installing the binary, you **must** complete the setup below. Without it, zed-tmux will never activate.
+
+### Automated (recommended)
+
+```bash
+zed-tmux init
+```
+
+This detects your shell (`zsh` / `bash`), appends the guard block to your rc file, and checks your `PATH`. Run it on each machine where you use Zed (local and remote).
+
+### Manual
 
 **Step 1** — Make sure the binary is in your `PATH`:
 
@@ -83,6 +93,8 @@ fi
 ```
 
 > If you installed via `go install` or Homebrew, replace `~/.local/bin/zed-tmux` with the actual path from `which zed-tmux`.
+
+### What the guard does
 
 | Variable | Purpose |
 |---|---|
@@ -127,6 +139,7 @@ The **detail line** below the list shows the full command line of the selected s
 
 ```bash
 zed-tmux                                   # TUI picker (usually invoked by the rc guard)
+zed-tmux init                              # One-time setup: add shell guard to rc file
 zed-tmux list                              # List all sessions across all projects
 zed-tmux gc [--dry-run] [--max-idle 30d]   # Clean up idle, unattached sessions
 zed-tmux kill-all                          # Kill all sessions for the current project
