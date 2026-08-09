@@ -122,7 +122,7 @@ func (m model) handleMouse(msg tea.MouseMsg) (tea.Model, tea.Cmd) {
 	if m.mode != modeNormal || msg.Button != tea.MouseButtonLeft || msg.Action != tea.MouseActionPress {
 		return m, nil
 	}
-	row := msg.Y - 3
+	row := msg.Y - 2
 	if row < 0 || row >= len(m.sessions) || m.sessions[row].Attached > 0 {
 		return m, nil
 	}
@@ -455,7 +455,7 @@ func (m model) viewConfirm(b *strings.Builder) {
 
 func runTUI(sessions []Session, socket, projectDir string) (action, error) {
 	m := newModel(sessions, socket, projectDir)
-	p := tea.NewProgram(m, tea.WithMouseCellMotion())
+	p := tea.NewProgram(m, tea.WithAltScreen(), tea.WithMouseCellMotion())
 	finalModel, err := p.Run()
 	if err != nil {
 		return action{}, fmt.Errorf("tui: %w", err)
