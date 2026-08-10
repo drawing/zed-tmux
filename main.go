@@ -74,7 +74,7 @@ func runDefault() {
 
 	switch act.typ {
 	case actionAttach:
-		execTmux(tmuxPath, configPath, socket, "attach-session", "-t", act.session)
+		execTmux(tmuxPath, configPath, socket, "attach-session", "-d", "-t", act.session)
 	case actionCreate:
 		execTmux(tmuxPath, configPath, socket, "new-session", "-s", act.session, "-c", cwd)
 	case actionQuit:

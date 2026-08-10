@@ -29,6 +29,13 @@ const (
 	actionQuit
 )
 
+type confirmType int
+
+const (
+	confirmDelete confirmType = iota
+	confirmAttach
+)
+
 type action struct {
 	typ     actionType
 	session string
@@ -44,19 +51,20 @@ type scrollTickMsg struct {
 }
 
 type model struct {
-	sessions     []Session
-	cursor       int
-	width        int
-	mode         uiMode
-	input        textinput.Model
-	inputMode    string // "new" or "rename"
-	socket       string
-	projectDir   string
-	result       action
-	errMsg       string
-	detail       string
-	detailGen    int
-	detailOffset int
+	sessions      []Session
+	cursor        int
+	width         int
+	mode          uiMode
+	input         textinput.Model
+	inputMode     string // "new" or "rename"
+	socket        string
+	projectDir    string
+	result        action
+	errMsg        string
+	detail        string
+	detailGen     int
+	detailOffset  int
+	confirmAction confirmType
 }
 
 func newModel(sessions []Session, socket, projectDir string) model {
@@ -64,17 +72,9 @@ func newModel(sessions []Session, socket, projectDir string) model {
 	ti.CharLimit = 64
 	ti.Prompt = ""
 
-	cursor := 0
-	for i, s := range sessions {
-		if s.Attached == 0 {
-			cursor = i
-			break
-		}
-	}
-
 	return model{
 		sessions:   sessions,
-		cursor:     cursor,
+		cursor:     0,
 		socket:     socket,
 		projectDir: projectDir,
 		input:      ti,
@@ -123,11 +123,17 @@ func (m model) handleMouse(msg tea.MouseMsg) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 	row := msg.Y - 2
-	if row < 0 || row >= len(m.sessions) || m.sessions[row].Attached > 0 {
+	if row < 0 || row >= len(m.sessions) {
 		return m, nil
 	}
 	m.cursor = row
-	m.result = action{typ: actionAttach, session: m.sessions[row].Name}
+	s := m.sessions[row]
+	if s.Attached > 0 {
+		m.mode = modeConfirm
+		m.confirmAction = confirmAttach
+		return m, nil
+	}
+	m.result = action{typ: actionAttach, session: s.Name}
 	return m, tea.Quit
 }
 
@@ -147,27 +153,27 @@ func (m model) handleNormalKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	m.errMsg = ""
 	switch msg.String() {
 	case "up", "k":
-		for i := m.cursor - 1; i >= 0; i-- {
-			if m.sessions[i].Attached == 0 {
-				m.cursor = i
-				break
-			}
+		if m.cursor > 0 {
+			m.cursor--
 		}
 		m.resetDetail()
 		return m, m.triggerDetail()
 	case "down", "j":
-		for i := m.cursor + 1; i < len(m.sessions); i++ {
-			if m.sessions[i].Attached == 0 {
-				m.cursor = i
-				break
-			}
+		if m.cursor < len(m.sessions)-1 {
+			m.cursor++
 		}
 		m.resetDetail()
 		return m, m.triggerDetail()
 	case "enter":
-		if len(m.sessions) > 0 && m.sessions[m.cursor].Attached == 0 {
-			m.result = action{typ: actionAttach, session: m.sessions[m.cursor].Name}
-			return m, tea.Quit
+		if len(m.sessions) > 0 {
+			s := m.sessions[m.cursor]
+			if s.Attached > 0 {
+				m.mode = modeConfirm
+				m.confirmAction = confirmAttach
+			} else {
+				m.result = action{typ: actionAttach, session: s.Name}
+				return m, tea.Quit
+			}
 		}
 	case "n":
 		m.result = action{typ: actionCreate, session: nextSessionName(m.sessions)}
@@ -246,6 +252,10 @@ func (m model) handleConfirmKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch msg.String() {
 	case "y":
 		name := m.sessions[m.cursor].Name
+		if m.confirmAction == confirmAttach {
+			m.result = action{typ: actionAttach, session: name}
+			return m, tea.Quit
+		}
 		if err := killSession(m.socket, name); err != nil {
 			m.errMsg = fmt.Sprintf("delete failed: %v", err)
 		} else {
@@ -269,14 +279,6 @@ func (m *model) refreshSessions() {
 	m.sessions = all
 	if m.cursor >= len(m.sessions) {
 		m.cursor = max(0, len(m.sessions)-1)
-	}
-	if m.cursor < len(m.sessions) && m.sessions[m.cursor].Attached > 0 {
-		for i := m.cursor; i < len(m.sessions); i++ {
-			if m.sessions[i].Attached == 0 {
-				m.cursor = i
-				break
-			}
-		}
 	}
 	m.errMsg = ""
 	m.resetDetail()
@@ -403,19 +405,22 @@ func (m model) viewNormal(b *strings.Builder) {
 			}
 			idle := "idle " + formatIdle(s.Idle())
 
-			if s.Attached > 0 {
-				name := fmt.Sprintf("%-10s", s.Name)
-				tag := styleAttached.Render("[attached]")
-				row := fmt.Sprintf("    %s  %-12s%s  %s  %s", name, cmd, windows, idle, tag)
-				b.WriteString(styleAttachedRow.Render(row) + "\n")
-			} else if i == m.cursor {
+			if i == m.cursor {
 				content := fmt.Sprintf("  ▸ %-10s  %-12s%s  %s", s.Name, cmd, windows, idle)
+				if s.Attached > 0 {
+					content += "  [attached]"
+				}
 				if m.width > 1 {
 					if pad := m.width - 1 - displayWidth(content); pad > 0 {
 						content += strings.Repeat(" ", pad)
 					}
 				}
 				b.WriteString(styleSelected.Render(content) + "\n")
+			} else if s.Attached > 0 {
+				name := fmt.Sprintf("%-10s", s.Name)
+				tag := styleAttached.Render("[attached]")
+				row := fmt.Sprintf("    %s  %-12s%s  %s  %s", name, cmd, windows, idle, tag)
+				b.WriteString(styleAttachedRow.Render(row) + "\n")
 			} else {
 				b.WriteString(fmt.Sprintf("    %-10s  %-12s%s  %s\n",
 					s.Name, cmd, windows, styleFaint.Render(idle)))
@@ -453,7 +458,12 @@ func (m model) viewInput(b *strings.Builder) {
 
 func (m model) viewConfirm(b *strings.Builder) {
 	name := m.sessions[m.cursor].Name
-	b.WriteString(fmt.Sprintf("  Delete session %q? (y/n)\n", name))
+	if m.confirmAction == confirmAttach {
+		b.WriteString(fmt.Sprintf("  Session %q is attached by another client.\n", name))
+		b.WriteString(fmt.Sprintf("  Attaching will detach it. Continue? (y/n)\n"))
+	} else {
+		b.WriteString(fmt.Sprintf("  Delete session %q? (y/n)\n", name))
+	}
 }
 
 func runTUI(sessions []Session, socket, projectDir string) (action, error) {
