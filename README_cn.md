@@ -107,14 +107,14 @@ fi
 |---|---|
 | `↑` / `k` | 上移光标 |
 | `↓` / `j` | 下移光标 |
-| `enter` / 点击 | attach 到选中 session |
+| `enter` / 点击 | attach 到选中 session（若已被 attach 则先确认） |
 | `n` | 新建 session（自动编号，立即创建） |
 | `N` | 新建 session 并自定义名称 |
 | `r` | 重命名选中 session |
 | `d` | 删除选中 session（二次确认） |
 | `q` / `esc` | 退出（关闭终端 tab） |
 
-已被其他终端 attach 的 session 整行 dim 显示并标黄色 `[attached]`，光标导航跳过，不可 attach、重命名或删除。
+已被其他终端 attach 的 session 整行 dim 显示并标黄色 `[attached]`。光标可以选中它们——按 `enter` 后会提示确认，确认后踢掉原客户端并 attach。这用于处理 SSH 断连后残留的僵尸 attach。重命名和删除对 attached session 仍然不可用。
 
 列表下方的**详情行**显示选中 session 的完整命令行，通过 `ps -t <pane_tty>` 异步查询。纯 shell session 详情行为空。命令超过终端宽度时水平滚动（marquee 效果）。
 

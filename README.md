@@ -107,14 +107,14 @@ Opens automatically when you create a terminal tab in Zed:
 |---|---|
 | `↑` / `k` | Move cursor up |
 | `↓` / `j` | Move cursor down |
-| `enter` / click | Attach to selected session |
+| `enter` / click | Attach to selected session (confirms first if attached elsewhere) |
 | `n` | New session (auto-numbered, instant) |
 | `N` | New session with custom name |
 | `r` | Rename selected session |
 | `d` | Delete selected session (with confirmation) |
 | `q` / `esc` | Quit (closes the terminal tab) |
 
-Sessions already attached by another terminal are dimmed with a yellow `[attached]` tag — the cursor skips them and they cannot be attached, renamed, or deleted.
+Sessions already attached by another terminal are dimmed with a yellow `[attached]` tag. You can still select them — pressing `enter` will ask for confirmation before detaching the other client and attaching yours. This handles stale attaches caused by SSH disconnects. Rename and delete remain blocked for attached sessions.
 
 The **detail line** below the list shows the full command line of the selected session, fetched asynchronously via `ps -t <pane_tty>`. Pure shell sessions show an empty detail line. Commands longer than the terminal width scroll horizontally (marquee style).
 

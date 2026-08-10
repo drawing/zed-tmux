@@ -48,7 +48,7 @@ Go binary takes over (main.go runDefault)
     │       Not a TTY → silent exec $SHELL
     │
     ├── 7. Launch bubbletea TUI picker
-    │       Shows all sessions; attached ones tagged [attached] and unselectable
+    │       Shows all sessions; attached ones tagged [attached], selectable with confirmation
     │       User action returns an action:
     │       ├── Attach → syscall.Exec tmux attach-session
     │       ├── Create → syscall.Exec tmux new-session
@@ -136,8 +136,8 @@ With existing sessions (showing current command):
 - The detail line layout is fixed (always occupies one row) — content changes don't shift the list
 - Commands longer than the terminal width scroll horizontally (marquee) within the reserved line; shorter commands display statically
 - Pure shell sessions (zsh/bash) show an empty detail line (the shell itself carries no information)
-- Sessions already attached by another terminal are dimmed with a yellow `[attached]` tag; cursor navigation skips them; they cannot be attached, renamed, or deleted
-- Mouse click selection is supported (attached rows are not clickable)
+- Sessions already attached by another terminal are dimmed with a yellow `[attached]` tag; they can be selected — `enter` prompts for confirmation before force-attaching (detaching the other client); rename and delete remain blocked
+- Mouse click selection is supported (attached rows trigger the same confirmation)
 
 With no existing sessions:
 
@@ -173,20 +173,20 @@ Delete requires confirmation:
 |---|---|
 | `↑` / `k` | Move cursor up |
 | `↓` / `j` | Move cursor down |
-| `enter` | Attach to selected session |
+| `enter` | Attach to selected session (confirms first if attached elsewhere) |
 | `n` | New session (enters input mode, pre-filled with next incremental number) |
 | `r` | Rename selected session (enters input mode, pre-filled with current name) |
 | `d` | Delete selected session (enters confirm mode) |
 | `q` / `esc` | Quit picker, close terminal tab |
 
 Input mode: `enter` confirms, `esc` cancels back to list.
-Confirm mode: `y` confirms deletion, `n` / `esc` cancels.
+Confirm mode: `y` confirms (attach or delete depending on context), `n` / `esc` cancels.
 
 ### Display Rules
 
 - Lists all sessions on the current socket (including attached ones)
-- Attached sessions are dimmed + yellow `[attached]` tag; cursor navigation skips them; no operations allowed
-- Initial cursor position is the first unattached session
+- Attached sessions are dimmed + yellow `[attached]` tag; cursor can select them; `enter` prompts confirmation before force-attaching; rename and delete are blocked
+- Initial cursor position is the first session
 
 ### TUI Internal State Machine
 
@@ -250,8 +250,10 @@ tmux -L <socket> -f <config> new-session -s <name> -c <cwd>
 ### Attach
 
 ```
-tmux -L <socket> -f <config> attach-session -t <name>
+tmux -L <socket> -f <config> attach-session -d -t <name>
 ```
+
+`-d` detaches any other clients first, handling stale attaches from dead SSH connections.
 
 ### Destroy
 
@@ -454,13 +456,13 @@ zed-tmux/
 
 **tui.go** — bubbletea TUI picker.
 
-- Three modes: `modeNormal` (list navigation), `modeInput` (text input), `modeConfirm` (delete confirmation)
-- `model.sessions` holds the full session list; attached sessions are displayed but unselectable (cursor skips them)
+- Three modes: `modeNormal` (list navigation), `modeInput` (text input), `modeConfirm` (delete or force-attach confirmation)
+- `model.sessions` holds the full session list; attached sessions are selectable — `enter` prompts confirmation before force-attaching with `attach-session -d`
 - Detail line: cursor movement triggers async `pane_tty` + `ps -t` query for the full command line; generation counter discards stale results
 - `fetchDetail(tty)`: filters shell processes, returns the first non-shell full command line
 - Long commands scroll horizontally within the reserved line (`scrollTickCmd`, 80ms/tick, 2 chars/tick)
 - `runTUI()`: creates `tea.Program` (with `WithMouseCellMotion`) and runs it; returns the user's `action` (Attach / Create / Quit)
-- Mouse click session selection supported (attached rows not clickable)
+- Mouse click session selection supported (attached rows trigger confirmation)
 - Rename and delete complete inside the TUI (invoke tmux → `refreshSessions()`), without exiting
 - Styles: selected row blue background full-width highlight, Faint (path, idle, help bar, attached rows), cyan (detail line with `⌘` prefix), yellow (`[attached]` tag), red (error messages)
 

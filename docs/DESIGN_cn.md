@@ -48,7 +48,7 @@ Go 二进制接管（main.go runDefault）
     │       非 TTY → 静默 exec $SHELL
     │
     ├── 7. 弹出 bubbletea TUI 选择器
-    │       显示所有 session，已 attach 的标 [attached] 且不可选择
+    │       显示所有 session，已 attach 的标 [attached]，可选中并确认后 attach
     │       用户操作后返回一个 action：
     │       ├── Attach → syscall.Exec tmux attach-session
     │       ├── Create → syscall.Exec tmux new-session
@@ -136,8 +136,8 @@ Go 二进制启动时取 `$PWD`（即 Zed 终端的工作目录）。Zed 的 `te
 - 详情行布局固定（始终占一行），不随内容变化导致列表位移
 - 命令超长时在预留行内水平滚动（marquee），短于终端宽度时静态显示
 - 纯 shell session（zsh/bash）详情行为空（shell 本身没有信息量）
-- 已被其他终端 attach 的 session 整行 dim 显示，末尾标黄色 `[attached]`，光标导航跳过，不可 attach/重命名/删除
-- 支持鼠标点击选择（attached 行不可点击）
+- 已被其他终端 attach 的 session 整行 dim 显示，末尾标黄色 `[attached]`，光标可以选中——按 `enter` 会提示确认后强制 attach（踢掉原客户端）；重命名和删除仍不可用
+- 支持鼠标点击选择（attached 行触发同样的确认流程）
 
 无存量 session 时：
 
@@ -173,20 +173,20 @@ Go 二进制启动时取 `$PWD`（即 Zed 终端的工作目录）。Zed 的 `te
 |---|---|
 | `↑` / `k` | 上移光标 |
 | `↓` / `j` | 下移光标 |
-| `enter` | attach 到选中 session |
+| `enter` | attach 到选中 session（若已被 attach 则先确认） |
 | `n` | 新建 session（进入输入模式，预填下一个递增序号） |
 | `r` | 重命名选中 session（进入输入模式，预填当前名称） |
 | `d` | 删除选中 session（进入确认模式） |
 | `q` / `esc` | 退出选择器，关闭终端 tab |
 
 输入模式中：`enter` 确认，`esc` 取消回到列表。
-确认模式中：`y` 确认删除，`n` / `esc` 取消。
+确认模式中：`y` 确认（attach 或删除，取决于上下文），`n` / `esc` 取消。
 
 ### 显示规则
 
 - 列出当前 socket 下的所有 session（包括已 attach 的）
-- 已 attach 的 session 整行 dim + 黄色 `[attached]` 标记，光标导航跳过，不可操作
-- 光标初始位置为第一个未 attach 的 session
+- 已 attach 的 session 整行 dim + 黄色 `[attached]` 标记，光标可以选中，按 `enter` 提示确认后强制 attach；重命名和删除不可用
+- 光标初始位置为第一个 session
 
 ### TUI 内部状态机
 
@@ -250,8 +250,10 @@ tmux -L <socket> -f <config> new-session -s <name> -c <cwd>
 ### Attach
 
 ```
-tmux -L <socket> -f <config> attach-session -t <name>
+tmux -L <socket> -f <config> attach-session -d -t <name>
 ```
+
+`-d` 先踢掉其他客户端，处理 SSH 断连后残留的僵尸 attach。
 
 ### 销毁
 
@@ -454,13 +456,13 @@ zed-tmux/
 
 **tui.go** — bubbletea TUI 选择器。
 
-- 三个模式：`modeNormal`（列表导航）、`modeInput`（文本输入）、`modeConfirm`（删除确认）
-- `model.sessions` 持有全量 session 列表，已 attach 的 session 显示但不可选择（光标跳过）
+- 三个模式：`modeNormal`（列表导航）、`modeInput`（文本输入）、`modeConfirm`（删除或强制 attach 确认）
+- `model.sessions` 持有全量 session 列表，已 attach 的 session 可以选中——按 `enter` 提示确认后通过 `attach-session -d` 强制 attach
 - 详情预留行：光标移动时通过 `pane_tty` + `ps -t` 异步查询完整命令行，generation 计数器丢弃过期结果
 - `fetchDetail(tty)`：过滤 shell 进程，返回第一个非 shell 的完整命令行
 - 超长命令在预留行内水平滚动（`scrollTickCmd`，80ms/tick，2 字符/tick）
 - `runTUI()`：创建 `tea.Program`（启用 `WithMouseCellMotion`）并运行，返回用户的 `action`（Attach / Create / Quit）
-- 支持鼠标点击选择 session（attached 行不可点击）
+- 支持鼠标点击选择 session（attached 行触发确认）
 - 重命名和删除在 TUI 内部完成（调用 tmux → `refreshSessions()`），不退出 TUI
 - 样式：选中行蓝色背景全宽高亮、Faint（路径、idle、帮助栏、attached 行）、青色（详情行 `⌘` 前缀）、黄色（`[attached]` 标记）、红色（错误信息）
 
